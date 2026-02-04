@@ -1,8 +1,9 @@
 ﻿using albums_api.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
-using System.Text.Json;
-using System.Text;
+using Microsoft.AspNetCore.Http;
+using System;
+using System.Linq;
+using System.Collections.Generic;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,40 +13,63 @@ namespace albums_api.Controllers
     [ApiController]
     public class AlbumController : ControllerBase
     {
-        // GET: api/album
+        /// <summary>
+        /// Liefert alle Alben zurück.
+        /// </summary>
         [HttpGet]
-        public IActionResult Get()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public ActionResult<IEnumerable<Album>> Get()
         {
             var albums = Album.GetAll();
+
+            if (albums == null || !albums.Any())
+            {
+                return NotFound("Keine Alben gefunden.");
+            }
 
             return Ok(albums);
         }
 
-        // GET api/<AlbumController>/5
+        /// <summary>
+        /// Liefert Alben für die angegebene Id. Optionally sort results by title, artist or price.
+        /// Erlaubte Werte für `sortBy`: "title", "artist", "price".
+        /// </summary>
         [HttpGet("{id}")]
-        public IActionResult Get(int id, [FromQuery] string? sortBy = null)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public ActionResult<IEnumerable<Album>> Get(int id, [FromQuery] string? sortBy = null)
         {
-            // Retrieve albums by ID (could be multiple if ID is not unique)
             if (id <= 0)
             {
-            return BadRequest("Album ID must be a positive number.");
+                return BadRequest("Album ID must be a positive number.");
             }
 
-            var albums = Album.GetAll().Where(a => a.Id == id);
+            var albums = Album.GetAll()?.Where(a => a.Id == id) ?? Enumerable.Empty<Album>();
 
             if (!albums.Any())
             {
-            return NotFound();
+                return NotFound($"No album found with id {id}.");
             }
 
-            // Sort albums if sortBy is provided
-            albums = sortBy?.ToLower() switch
+            if (!string.IsNullOrWhiteSpace(sortBy))
             {
-            "title" => albums.OrderBy(a => a.Title),
-            "artist" => albums.OrderBy(a => a.Artist),
-            "price" => albums.OrderBy(a => a.Price),
-            _ => albums
-            };
+                var key = sortBy.Trim().ToLowerInvariant();
+
+                albums = key switch
+                {
+                    "title" => albums.OrderBy(a => a.Title),
+                    "artist" => albums.OrderBy(a => a.Artist),
+                    "price" => albums.OrderBy(a => a.Price),
+                    _ => null
+                };
+
+                if (albums == null)
+                {
+                    return BadRequest("Invalid sortBy value. Allowed values: title, artist, price.");
+                }
+            }
 
             return Ok(albums);
         }
