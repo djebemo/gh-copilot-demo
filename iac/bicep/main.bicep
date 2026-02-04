@@ -129,3 +129,13 @@ output env array=[
   'Storage account name: ${storageAccount.name}'
   'Storage container name: ${blobContainer.name}'
 ]
+
+// container registry
+output containerRegistryLoginServer string=registryName
+output containerRegistryUsername string=registryUsername
+output containerRegistryPassword string=registryPassword
+
+// azure openAI Ressources
+output albumApiUrl string=albumServiceCapp.outputs.fqdn
+output albumViewerUrl string=albumViewerCapp.outputs.fqdn
+

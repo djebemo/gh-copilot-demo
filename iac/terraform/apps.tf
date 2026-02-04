@@ -62,3 +62,8 @@ resource "null_resource" "docker_api-userprofile" {
     command = "az acr build --image devopsoh/api-userprofile:${local.apiuserprofile_base_image_tag} --registry ${azurerm_container_registry.container_registry.login_server} --build-arg build_version=${local.apiuserprofile_base_image_tag} --file ../../apis/userprofile/Dockerfile ../../apis/userprofile"
   }
 }
+
+// container registgry
+output containerRegistryLoginServer string=azurerm_container_registry.container_registry.login_server
+output containerRegistryUsername string=azurerm_container_registry.container_registry.admin_username
+output containerRegistryPassword string=azurerm_container_registry.container_registry.admin_password
